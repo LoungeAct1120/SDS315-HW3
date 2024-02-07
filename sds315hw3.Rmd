@@ -1,0 +1,158 @@
+---
+title: "SDS315HW3"
+author: "Annabella Smith"
+date: "2024-02-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(mosaic)
+library(dplyr)
+```
+## Problem 1
+```{r}
+creat <- read.csv('creatinine.csv')
+```
+
+```{r, include = FALSE}
+# A) What creatinine clearance rate should we expect for a 55-year-old? Explain briefly (one or two sentences + equations) how you determined this.
+graph_creat <- ggplot(creat)
+graph_creat + geom_point(aes(x=age,y=creatclear))
+model_creat = lm(creatclear ~ age, data=creat)
+coef(model_creat)
+fiftyfive <- data.frame(age = c(55))
+prediction <- round(predict(model_creat, newdata = fiftyfive ),2)
+```
+
+#### After looking at a scatterplot of the data and then running a linear regression model, it was determined that the expected creatinine clearance rate expected for a 55 year old, based on the data, is `r prediction` mL/min. The equation used to determine this was creatclear = 148 - 0.62(age).
+
+```{r}
+# B) How does creatinine clearance rate change with age? (This should be a single number whose units are ml/minute per year.) Explain briefly (one or two sentences) how you determined this.
+```
+#### Based on the linear regression model created by the data, creatine clearance rate goes down about 0.62 mL/min with each year aged on average. This was taken from the same equation as seen in question A. 
+
+```{r}
+# C) Whose creatinine clearance rate is healthier (higher) for their age: a 40-year-old with a rate of 135, or a 60-year-old with a rate of 112? Explain briefly (a few sentences + equations) how you determined this.
+ageq <- data.frame(age = c(40, 60), actual = c(135, 112))
+ageq <- ageq %>%
+   mutate(creat_residual = resid(model_creat)[1:length(ageq$actual)])
+```
+#### Relative to their age, a 60 year old with a rate of 112 is healthier, in that they have a higher creatinine clearance. This was calculated by the residual(how close they are to the expected), and the 60 year old had a residual much closer to the expect for their age than the 40 year old. 
+
+***
+## Problem 2
+```{r}
+market <- read.csv('marketmodel.csv')
+```
+
+```{r}
+model_AAPL = lm(AAPL ~ SPY, data = market)
+model_GOOG = lm(GOOG ~ SPY, data = market)
+model_MRK = lm(MRK ~ SPY, data = market)
+model_JNJ = lm(JNJ ~ SPY, data = market)
+model_WMT = lm(WMT ~ SPY, data = market)
+model_TGT = lm(TGT ~ SPY, data = market)
+
+in_AAPL <- round(coef(model_AAPL)[1],3)
+slope_AAPL <- round(coef(model_AAPL)[2],3)
+
+in_GOOG <- round(coef(model_GOOG)[1],3)
+slope_GOOG <- round(coef(model_GOOG)[2],3)
+
+in_MRK <- round(coef(model_MRK)[1],3)
+slope_MRK <- round(coef(model_MRK)[2],3)
+
+in_JNJ <- round(coef(model_JNJ)[1],3)
+slope_JNJ <- round(coef(model_JNJ)[2],3)
+
+in_WMT <- round(coef(model_WMT)[1],3)
+slope_WMT <- round(coef(model_WMT)[2],3)
+
+in_TGT <- round(coef(model_TGT)[1],3)
+slope_TGT <- round(coef(model_TGT)[2],3)
+
+
+r_AAPL <- model_AAPL %>%
+  summary() %>%
+  .$r.squared %>%
+  round(3)
+
+r_GOOG <- model_GOOG %>%
+  summary() %>%
+  .$r.squared %>%
+  round(3)
+
+r_MRK <- model_MRK %>%
+  summary() %>%
+  .$r.squared %>%
+  round(3)
+
+r_JNJ <- model_JNJ %>%
+  summary() %>%
+  .$r.squared %>%
+  round(3)
+
+r_WMT <- model_WMT %>%
+  summary() %>%
+  .$r.squared %>%
+  round(3)
+
+r_TGT <- model_TGT %>%
+  summary() %>%
+  .$r.squared %>%
+  round(3)
+
+market_tibble <- tibble(
+  Ticker = c('AAPL','GOOG','MRK','JNJ','WMT','TGT'),
+  Intercept = c(in_AAPL,in_GOOG,in_MRK,in_JNJ,in_WMT,in_TGT),
+  Slope = c(slope_AAPL,slope_GOOG,slope_MRK,slope_JNJ,slope_WMT,slope_TGT),
+  R_Squared = c(r_AAPL, r_GOOG, r_MRK, r_JNJ, r_WMT, r_TGT)
+  
+)
+
+knitr::kable(market_tibble, align = ('cccc'))
+```
+##### The table shows a linear model for each company, represnted by it's ticker, based on the data. The intercept is also known as alpha, while the slope is known as beta. R Squared represents how much of the variation can be explained by the indepented variable(SPY). 
+
+#### The 'beta,' or the slope considering each country is an important marker for buisness and stocks. The beta represents how volitile, how reactive, or how high the systematic risk is, the buisness's stocks are to changes in the market. A slope of one is the average across buisnesses while higher than one means it's more reactiv to changes in the market than average and therefore has a higher risk, furthermore, a low beta means that it is less reactive to changes on average. 
+#### Considering the table, it can be seen that WMT has the lowest systematic risk due to it having the lowest slope. This makes sense in context because WMT, otherwise known as Walmart, is inherinetly less reactive. For example, if the market goes down, people it won't affect people shopping their, unlike more expensive retail stores. AAPL has the highest systematic risk due to it having the highest slope. AAPL, or Apple Inc, having the highest beta also makes sense in context. If the market goes down, people are less likely to spend their money on luxury goods, and more likely to spend them wisely, for example on groceries and clothes from Walmart. 
+
+*** 
+## Problem 3
+```{r}
+covid <- read.csv('covid.csv')
+italy <- filter(covid, country == 'Italy') 
+spain <- filter(covid, country == 'Spain') 
+
+ggplot() + 
+  geom_line(data = italy, aes(x = days_since_first_death, y = log(deaths), color = "Italy")) +
+  geom_line(data = spain, aes(x = days_since_first_death, y = log(deaths), color = "Spain")) +
+  labs(color = "Country") + labs(title='Covid Days Since First Death vs log(deaths)', x = 'Days Since First Death')
+
+
+italy_coef <- coef(lm(log(deaths) ~ days_since_first_death, data=italy))
+slope_italy <- round(italy_coef[2],3)
+italy_dt <- round(70/(slope_italy*100))
+
+spain_coef <- coef(lm(log(deaths) ~ days_since_first_death, data=spain))
+slope_spain <- round(spain_coef[2],3)
+spain_dt <- round(70/(slope_spain*100))
+```
+
+#### The line graphs above show Spain and Italy's days since first death vs deaths, fitted with log(deaths). Looking at Covid data from Italy and Spain, it was calculated that in Italy, deaths doubled every `r italy_dt` days with an estimated growth rate of `r slope_italy`. In Spain, deaths double every `r spain_dt` days with an estimated growth rate of `r slope_spain`.
+
+***
+## Problem 4
+```{r}
+milk <- read.csv('milk.csv')
+ggplot(milk) + 
+  geom_point(aes(x=log(price), y=log(sales))) + labs(title = 'Log(price) of Milk vs Log(sales) of Milk)')
+
+milk_coef <- coef(lm(log(sales) ~ log(price), data=milk))
+in_milk <- round(milk_coef[1],2)
+slope_milk <- round(milk_coef[2],2)
+```
+
+#### The estimated elasticity of milk prices is `r slope_milk`. This was calculated after taking the log of both price and sales, since economists identify this property as a power function. 
